@@ -68,6 +68,9 @@ importers:
       tailwind-scrollbar:
         specifier: ^4.0.2
         version: 4.0.2(react@19.1.0)(tailwindcss@4.1.6)
+      tauri:
+        specifier: link:tauri-apps/api/tauri
+        version: link:tauri-apps/api/tauri
       xml-js:
         specifier: ^1.6.11
         version: 1.6.11

@@ -1,3 +1,6 @@
+'use client'
+
+import {invoke} from '@tauri-apps/api/core'
 import Link from 'next/link'
 import Image from 'next/image'
 import { ArrowRight, Database, Sparkles, Code, Zap, Github } from 'lucide-react'
@@ -18,8 +21,21 @@ import {
 } from '@/components/ui/card'
 import { GITHUB_REPO } from '@/constants/links'
 import { PATHS } from '@/constants/paths'
+import { useEffect } from 'react'
 
 export default function LandingPage() {
+
+  useEffect(() => {
+    // Example of invoking a Tauri command on page load
+    invoke('initialize_database')
+      .then((response) => {
+        console.log('Tauri command response:', response)
+      })
+      .catch((error) => {
+        console.error('Error invoking Tauri command:', error)
+      })
+  }, []);
+
   return (
     <div className="min-h-screen bg-background px-8">
       <div className="flex flex-col container mx-auto">
