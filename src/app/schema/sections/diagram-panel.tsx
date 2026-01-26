@@ -1,13 +1,12 @@
-import { ChevronRight, Moon, Sun } from 'lucide-react'
-import { Button } from '@/components/ui/button'
 import { Diagram } from '@/components/reactflow/diagram'
-import { SignedIn, UserButton } from '@clerk/nextjs'
-import { useEffect } from 'react'
-import { ReactFlowProvider } from '@xyflow/react'
+import { Button } from '@/components/ui/button'
+import { PATHS } from '@/constants/paths'
 import { useChatStore } from '@/stores/chat'
 import { useConfigStore } from '@/stores/config'
-import { PATHS } from '@/constants/paths'
+import { ReactFlowProvider } from '@xyflow/react'
+import { ChevronRight, Moon, Sun } from 'lucide-react'
 import Link from 'next/link'
+import { useEffect } from 'react'
 
 export default function DiagramPanel({
   chatPanelIsShown,

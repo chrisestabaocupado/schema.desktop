@@ -2,23 +2,22 @@
 
 import type { IThread } from '@/models/Thread'
 
-import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
+import { useEffect, useState } from 'react'
 
-import { ChevronUp } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
 } from '@/components/ui/resizable'
-import { Button } from '@/components/ui/button'
+import { ChevronUp } from 'lucide-react'
 
+import { useChatStore } from '@/stores/chat'
+import { useConfigStore } from '@/stores/config'
 import Chat from '../sections/chat-panel'
 import DiagramPanel from '../sections/diagram-panel'
 import SchemaPanel from '../sections/schema-panel'
-import { useChatStore } from '@/stores/chat'
-import { useConfigStore } from '@/stores/config'
-import { useUser } from '@clerk/nextjs'
 
 export default function PageContent({ thread }: { thread: IThread | null }) {
   const [panels, setPanels] = useState<{ [panel: string]: boolean }>({

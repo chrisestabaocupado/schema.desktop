@@ -1,5 +1,6 @@
 use rusqlite::{Connection, Result};
 
+/*
 struct User {
     user_id: String,
     email: String,
@@ -12,7 +13,7 @@ struct Conversation {
     user_id: String,
     title: String,
     created_at: String,
-    updated_at: String, 
+    updated_at: String,
 }
 
 struct Message {
@@ -22,6 +23,7 @@ struct Message {
     content: String,
     created_at: String,
 }
+*/
 
 #[tauri::command]
 pub fn database_conection() -> Result<Connection> {
@@ -33,28 +35,35 @@ pub fn database_conection() -> Result<Connection> {
 #[tauri::command]
 pub fn initialize_database() {
     let connection = database_conection().unwrap();
-    connection.execute_batch(
-        "
+    connection
+        .execute_batch(
+            "
         CREATE TABLE IF NOT EXISTS sender_types (
             sender_type_id INTEGER PRIMARY KEY,
             description TEXT NOT NULL
         );
 
         CREATE TABLE IF NOT EXISTS users (
-            user_id TEXT PRIMARY KEY,
-            email TEXT NOT NULL
+            user_id TEXT PRIMARY KEY DEFAULT (uuid()),
+            email TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
 
         CREATE TABLE IF NOT EXISTS conversations (
             conversation_id TEXT PRIMARY KEY,
             user_id TEXT NOT NULL,
             title TEXT, 
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY(user_id) REFERENCES users(user_id)
         );
 
         CREATE TABLE IF NOT EXISTS schemas (
             conversation_id TEXT PRIMARY KEY,
             schema_sql TEXT NOT NULL,    
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY(conversation_id) REFERENCES conversations(conversation_id)
         );
 
@@ -63,9 +72,12 @@ pub fn initialize_database() {
             conversation_id TEXT NOT NULL,
             sender INTEGER NOT NULL,
             content TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY(sender) REFERENCES sender_types(sender_type_id),
             FOREIGN KEY(conversation_id) REFERENCES conversations(conversation_id)
         );
         ",
-    ).expect("failed to create table");
+        )
+        .expect("failed to create table");
 }

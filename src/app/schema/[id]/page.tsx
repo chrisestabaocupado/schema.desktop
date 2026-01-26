@@ -1,7 +1,6 @@
-import { currentUser } from '@clerk/nextjs/server'
+import { getThread } from '@/lib/thread'
 import { redirect } from 'next/navigation'
 import PageContent from './page-content'
-import { getThread } from '@/lib/thread'
 
 type PageProps = {
   params: Promise<{ id: string }>

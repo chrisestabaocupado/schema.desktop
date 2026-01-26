@@ -1,26 +1,28 @@
+'use client'
+
 import { Button } from '@/components/ui/button'
 
 import { PATHS } from '@/constants/paths'
-import { getThreadsByUserId } from '@/lib/thread'
-import { SignedIn, UserButton } from '@clerk/nextjs'
-import { currentUser } from '@clerk/nextjs/server'
+// import { getThreadsByUserId } from '@/lib/thread'
 import { Database, PlusCircle } from 'lucide-react'
 import Link from 'next/link'
-import { redirect } from 'next/navigation'
-import { ThreadList } from './thread-list'
 import { ExampleButtons } from './examples'
+import { ThreadList } from './thread-list'
 
-export default async function SchemasList() {
-  const user = await currentUser()
+export default function SchemasList() {
+  const { user } = useUser()
 
-  if (!user) {
-    redirect('/sign-in')
-  }
+  // Middleware handles authentication protection for this route
+  // No need for client-side redirect logic here
 
-  const threads = await getThreadsByUserId(user.id)
+  const threads: any[] = []
 
   const getDatabaseTitle = (diagram: string) => {
-    return JSON.parse(diagram)?.database?.name
+    try {
+      return JSON.parse(diagram)?.database?.name
+    } catch {
+      return 'Untitled'
+    }
   }
 
   const mappedThreads = threads.map((thread) => {
@@ -61,7 +63,7 @@ export default async function SchemasList() {
 
       <div className="flex flex-col gap-44">
         <ThreadList threads={mappedThreads} />
-        <ExampleButtons userId={user.id} />
+        <ExampleButtons userId={user ? user.id : ''} />
       </div>
     </div>
   )
