@@ -1,5 +1,7 @@
 'use client';
 
+import { invoke } from "@tauri-apps/api/core"
+
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
@@ -90,14 +92,22 @@ function UserNamePage({ setCurrentPage, setUserName, userName, currentPage }: { 
   )
 }
 
-function FinishPage() {
+function FinishPage({ geminiApiKey, userName }: { geminiApiKey: string; userName: string }) {
+  const handleSumbit = async () => {
+    await localStorage.setItem('user_name', userName);
+    await invoke('store_api_key', { apiKey: geminiApiKey });
+    await invoke('initialize_database');
+
+    router.push('/schemas')
+  }
+
   const router = useRouter();
 
   return (
     <>
       <h1>All Set!</h1>
       <p>You're ready to start using Schema Desktop.</p>
-      <Button onClick={() => router.push('/schemas')}>Finish</Button>
+      <Button onClick={handleSumbit}>Finish</Button>
     </>
   )
 }
@@ -118,7 +128,7 @@ export default function App() {
             ) : currentPage === 1 ? (
               <UserNamePage setCurrentPage={setCurrentPage} setUserName={setUserName} userName={userName} currentPage={currentPage} />
             ) : (
-              <FinishPage />
+                  <FinishPage geminiApiKey={geminiApiKey} userName={userName} />
             )
           }
         </div>

@@ -1,30 +1,5 @@
 use rusqlite::{Connection, Result};
 
-/*
-struct User {
-    user_id: String,
-    email: String,
-    created_at: String,
-    updated_at: String,
-}
-
-struct Conversation {
-    conversation_id: String,
-    user_id: String,
-    title: String,
-    created_at: String,
-    updated_at: String,
-}
-
-struct Message {
-    message_id: String,
-    conversation_id: String,
-    sender: String,
-    content: String,
-    created_at: String,
-}
-*/
-
 #[tauri::command]
 pub fn database_conection() -> Result<Connection> {
     let connection = Connection::open("test.db")?;
@@ -43,20 +18,11 @@ pub fn initialize_database() {
             description TEXT NOT NULL
         );
 
-        CREATE TABLE IF NOT EXISTS users (
-            user_id TEXT PRIMARY KEY DEFAULT (uuid()),
-            email TEXT NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        );
-
         CREATE TABLE IF NOT EXISTS conversations (
             conversation_id TEXT PRIMARY KEY,
-            user_id TEXT NOT NULL,
             title TEXT, 
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY(user_id) REFERENCES users(user_id)
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
 
         CREATE TABLE IF NOT EXISTS schemas (
