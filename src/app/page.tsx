@@ -105,7 +105,7 @@ function FinishPage({ geminiApiKey, userName }: { geminiApiKey: string; userName
 
   return (
     <>
-      <h1>All Set!</h1>
+      <h1>Ok {userName}. All Set!</h1>
       <p>You're ready to start using Schema Desktop.</p>
       <Button onClick={handleSumbit}>Finish</Button>
     </>
