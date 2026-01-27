@@ -15,7 +15,6 @@ import { Button } from '@/components/ui/button'
 import { PATHS } from '@/constants/paths'
 import { getRelativeTime } from '@/utils/get-relative-time'
 import { Trash2 } from 'lucide-react'
-import { deleteThread } from '@/lib/thread'
 import { ConfirmationModal } from '@/components/ui/confirmation-modal'
 import { useRouter } from 'next/navigation'
 
@@ -56,7 +55,6 @@ export function ThreadList({ threads }: { threads: Thread[] }) {
     if (currentThreadToDelete?.chat_id) {
       setIsDeleting(true)
       try {
-        await deleteThread(currentThreadToDelete.chat_id)
         router.refresh()
       } catch (error) {
         console.error('Failed to delete thread:', error)

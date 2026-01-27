@@ -19,7 +19,7 @@ pub fn initialize_database() {
         );
 
         CREATE TABLE IF NOT EXISTS conversations (
-            conversation_id TEXT PRIMARY KEY,
+            conversation_id TEXT PRIMARY KEY DEFAULT (uuid()),
             title TEXT, 
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP

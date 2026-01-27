@@ -1,21 +1,39 @@
 'use client'
 
 import { Button } from '@/components/ui/button'
-
 import { PATHS } from '@/constants/paths'
-// import { getThreadsByUserId } from '@/lib/thread'
 import { Database, PlusCircle } from 'lucide-react'
 import Link from 'next/link'
+import { useEffect, useState } from 'react'
+import { invoke } from '@tauri-apps/api/core'
 import { ExampleButtons } from './examples'
 import { ThreadList } from './thread-list'
 
+interface Thread {
+  conversation_id: string
+  title: string
+  schema_sql: string
+}
+
 export default function SchemasList() {
-  const { user } = useUser()
+  const [threads, setThreads] = useState<Thread[]>([])
+  const [isLoading, setIsLoading] = useState(true)
 
-  // Middleware handles authentication protection for this route
-  // No need for client-side redirect logic here
+  useEffect(() => {
+    const loadThreads = async () => {
+      try {
+        const result = await invoke<Thread[]>('get_threads')
+        setThreads(result)
+      } catch (error) {
+        console.error('Error loading threads:', error)
+        setThreads([])
+      } finally {
+        setIsLoading(false)
+      }
+    }
 
-  const threads: any[] = []
+    loadThreads()
+  }, [])
 
   const getDatabaseTitle = (diagram: string) => {
     try {
@@ -28,7 +46,7 @@ export default function SchemasList() {
   const mappedThreads = threads.map((thread) => {
     return {
       ...thread,
-      dbTitle: getDatabaseTitle(thread.diagram),
+      dbTitle: getDatabaseTitle(thread.schema_sql),
     }
   })
 
@@ -39,11 +57,6 @@ export default function SchemasList() {
           <Database className="h-6 w-6" />
           <span className="font-bold inline-block">schema.ai</span>
         </Link>
-        <div className="flex items-center gap-4">
-          <SignedIn>
-            <UserButton />
-          </SignedIn>
-        </div>
       </header>
       <div className="flex justify-between items-center mb-8">
         <div>
@@ -61,10 +74,17 @@ export default function SchemasList() {
         </Link>
       </div>
 
-      <div className="flex flex-col gap-44">
-        <ThreadList threads={mappedThreads} />
-        <ExampleButtons userId={user ? user.id : ''} />
-      </div>
+      {isLoading && <p className="text-center text-muted-foreground">Cargando esquemas...</p>}
+
+      {!isLoading && threads.length === 0 && (
+        <p className="text-center text-muted-foreground">No hay esquemas creados aún</p>
+      )}
+
+      {!isLoading && threads.length > 0 && (
+        <div className="flex flex-col gap-4">
+          <ThreadList threads={mappedThreads} />
+        </div>
+      )}
     </div>
   )
 }
