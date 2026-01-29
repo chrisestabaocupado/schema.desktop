@@ -43,7 +43,7 @@ function APIKeyPage({ setCurrentPage, setGeminiApiKey, geminiApiKey, currentPage
       <h1>Welcome to Schema Desktop!</h1>
       <p>Get started by introducing your Gemini API key.</p>
 
-      <Input type="password" placeholder='Enter your Gemini API key' name="gemini_api_key" id="gemini-api-key-input" onChange={(e) => setGeminiApiKey(e.target.value)} />
+      <Input type="password" placeholder='Enter your Gemini API key' name="gemini_api_key" id="gemini-api-key-input" onChange={(e) => setGeminiApiKey(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleNext()} />
 
       <div className="flex flex-row w-full justify-between">
         <Button disabled={currentPage === 0} onClick={() => setCurrentPage(currentPage - 1)}>Back</Button>
@@ -75,7 +75,7 @@ function UserNamePage({ setCurrentPage, setUserName, userName, currentPage }: { 
     <>
       <h1>Whats Your Name?</h1>
       <p>Please enter your name below.</p>
-      <Input type="text" placeholder='Enter your name' name="user_name" id="user-name-input" onChange={(e) => setUserName(e.target.value)} />
+      <Input type="text" placeholder='Enter your name' name="user_name" id="user-name-input" onChange={(e) => setUserName(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleNext()} />
 
       <div className="flex flex-row w-full justify-between">
         <Button disabled={currentPage === 0} onClick={() => setCurrentPage(currentPage - 1)}>Back</Button>
