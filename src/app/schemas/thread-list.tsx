@@ -1,6 +1,5 @@
 'use client'
 
-import type { IThread } from '@/models/Thread'
 import { useState } from 'react'
 import {
   Card,
@@ -17,15 +16,13 @@ import { getRelativeTime } from '@/utils/get-relative-time'
 import { Trash2 } from 'lucide-react'
 import { ConfirmationModal } from '@/components/ui/confirmation-modal'
 import { useRouter } from 'next/navigation'
+import { ThreadUI } from './page'
+import { invoke } from '@tauri-apps/api/core'
 
-interface Thread extends Partial<IThread> {
-  dbTitle: string
-}
-
-export function ThreadList({ threads }: { threads: Thread[] }) {
+export function ThreadList({ threads }: { threads: ThreadUI[] }) {
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [currentThreadToDelete, setCurrentThreadToDelete] =
-    useState<Thread | null>(null)
+    useState<ThreadUI | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
   const router = useRouter()
 
@@ -43,9 +40,13 @@ export function ThreadList({ threads }: { threads: Thread[] }) {
     )
   }
 
-  const updatedAt = (threadUpdatedAt: string) => new Date(threadUpdatedAt)
+  const updatedAt = (threadUpdatedAt: string) => {
+    // If empty string or invalid, return current date or handle gracefully
+    if (!threadUpdatedAt) return new Date();
+    return new Date(threadUpdatedAt);
+  }
 
-  const handleDeleteClick = (e: React.MouseEvent, thread: Thread) => {
+  const handleDeleteClick = (e: React.MouseEvent, thread: ThreadUI) => {
     e.preventDefault()
     setCurrentThreadToDelete(thread)
     setShowDeleteModal(true)
@@ -55,7 +56,18 @@ export function ThreadList({ threads }: { threads: Thread[] }) {
     if (currentThreadToDelete?.chat_id) {
       setIsDeleting(true)
       try {
-        router.refresh()
+        await invoke('delete_thread', { chatId: currentThreadToDelete.chat_id })
+        // Since we are in a client component and list is passed as prop, 
+        // refreshing router won't update the state in parent automatically 
+        // unless parent re-fetches.
+        // Option 1: Trigger full page reload (window.location.reload())
+        // Option 2: Pass a callback from parent to remove item from state.
+        // For now, full reload is simplest migration step, 
+        // or ensure parent useEffect re-runs on focus/nav.
+        // Ideally: router.refresh() works if checking server components, but here 
+        // we fetch in client useEffect.
+        // Let's reload page to ensure list is fresh.
+        window.location.reload();
       } catch (error) {
         console.error('Failed to delete thread:', error)
       } finally {
@@ -88,7 +100,7 @@ export function ThreadList({ threads }: { threads: Thread[] }) {
                     {thread.dbTitle}
                   </CardTitle>
                   <CardDescription className="text-xs">
-                    Last updated: {getRelativeTime(thread?.updatedAt || '')}
+                    Last updated: {getRelativeTime(thread?.updated_at || '')}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -97,8 +109,8 @@ export function ThreadList({ threads }: { threads: Thread[] }) {
                   </p>
                 </CardContent>
                 <CardFooter className="text-xs text-muted-foreground">
-                  {updatedAt(thread?.updatedAt || '').toLocaleDateString()} at{' '}
-                  {updatedAt(thread?.updatedAt || '').toLocaleTimeString()}
+                  {updatedAt(thread?.updated_at || '').toLocaleDateString()} at{' '}
+                  {updatedAt(thread?.updated_at || '').toLocaleTimeString()}
                 </CardFooter>
               </Card>
             </Link>

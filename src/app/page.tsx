@@ -2,7 +2,7 @@
 
 import { invoke } from "@tauri-apps/api/core"
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogAction } from '@/components/ui/alert-dialog';
@@ -116,6 +116,54 @@ export default function App() {
   const [geminiApiKey, setGeminiApiKey] = useState('');
   const [userName, setUserName] = useState('');
   const [currentPage, setCurrentPage] = useState(0);
+  const [loadingStatus, setLoadingStatus] = useState<'checking' | 'redirecting' | 'ready'>('checking');
+
+  const router = useRouter();
+
+  useEffect(() => {
+    const checkOnboardingStatus = async () => {
+      const userName = localStorage.getItem('user_name');
+
+      if (!userName) {
+        setLoadingStatus('ready');
+        return; // No user name, show onboarding
+      }
+
+      try {
+        // Check if API key exists in keyring
+        await invoke('get_api_key');
+        // Both user_name and API key exist, redirect to schemas
+        setLoadingStatus('redirecting');
+        router.push('/schemas');
+      } catch (error) {
+        // API key doesn't exist, clear user_name and show onboarding
+        localStorage.removeItem('user_name');
+        setLoadingStatus('ready');
+      }
+    };
+
+    checkOnboardingStatus();
+  }, []);
+
+  if (loadingStatus === 'checking') {
+    return (
+      <div className='flex flex-row justify-center items-center w-dvw h-dvh'>
+        <div className='flex flex-col items-center gap-4'>
+          <h1 className='text-2xl font-semibold'>Preparing everything for you</h1>
+        </div>
+      </div>
+    );
+  }
+
+  if (loadingStatus === 'redirecting') {
+    return (
+      <div className='flex flex-row justify-center items-center w-dvw h-dvh'>
+        <div className='flex flex-col items-center gap-4'>
+          <h1 className='text-2xl font-semibold'>Redirecting to your workspace</h1>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className='flex flex-row justify-center items-center w-dvw h-dvh'>

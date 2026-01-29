@@ -6,23 +6,23 @@ import { Database, PlusCircle } from 'lucide-react'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { invoke } from '@tauri-apps/api/core'
-import { ExampleButtons } from './examples'
 import { ThreadList } from './thread-list'
+import { TauriThread } from '@/types/tauri'
 
-interface Thread {
-  conversation_id: string
-  title: string
-  schema_sql: string
+// Interface extending TauriThread to include the UI-specific property
+export interface ThreadUI extends TauriThread {
+  dbTitle: string
 }
 
 export default function SchemasList() {
-  const [threads, setThreads] = useState<Thread[]>([])
+  const [threads, setThreads] = useState<TauriThread[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
     const loadThreads = async () => {
       try {
-        const result = await invoke<Thread[]>('get_threads')
+        const result = await invoke<TauriThread[]>('get_all_threads')
+        console.log('Loaded threads:', result)
         setThreads(result)
       } catch (error) {
         console.error('Error loading threads:', error)
@@ -37,21 +37,21 @@ export default function SchemasList() {
 
   const getDatabaseTitle = (diagram: string) => {
     try {
-      return JSON.parse(diagram)?.database?.name
+      return JSON.parse(diagram)?.database?.name || 'Untitled'
     } catch {
       return 'Untitled'
     }
   }
 
-  const mappedThreads = threads.map((thread) => {
+  const mappedThreads: ThreadUI[] = threads.map((thread) => {
     return {
       ...thread,
-      dbTitle: getDatabaseTitle(thread.schema_sql),
+      dbTitle: getDatabaseTitle(thread.diagram),
     }
   })
 
   return (
-    <div className="container mx-auto py-8 max-w-5xl">
+    <div className="container mx-auto py-8 px-4 sm:px-6 lg:px-8 max-w-5xl">
       <header className="flex justify-between items-center w-full mb-8">
         <Link href="/" className="flex items-center justify-between space-x-2">
           <Database className="h-6 w-6" />

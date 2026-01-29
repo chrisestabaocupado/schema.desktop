@@ -27,10 +27,11 @@ pub fn initialize_database() {
 
         CREATE TABLE IF NOT EXISTS schemas (
             conversation_id TEXT PRIMARY KEY,
-            schema_sql TEXT NOT NULL,    
+            schema_sql TEXT NOT NULL DEFAULT '',
+            diagram TEXT NOT NULL DEFAULT '',
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY(conversation_id) REFERENCES conversations(conversation_id)
+            FOREIGN KEY(conversation_id) REFERENCES conversations(conversation_id) ON DELETE CASCADE
         );
 
         CREATE TABLE IF NOT EXISTS messages (
@@ -41,7 +42,7 @@ pub fn initialize_database() {
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY(sender) REFERENCES sender_types(sender_type_id),
-            FOREIGN KEY(conversation_id) REFERENCES conversations(conversation_id)
+            FOREIGN KEY(conversation_id) REFERENCES conversations(conversation_id) ON DELETE CASCADE
         );
         ",
         )
