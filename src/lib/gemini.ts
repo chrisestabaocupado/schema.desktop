@@ -9,9 +9,9 @@ import {
   validateUserIntentPrompt,
 } from '@/lib/prompts'
 
-const MAIN_MODEL = 'gemini-2.0-flash'
-const SCHEMA_MODEL = 'gemini-2.0-flash'
-const MISC_MODEL = 'gemini-2.0-flash'
+const MAIN_MODEL = 'gemini-2.5-flash'
+const SCHEMA_MODEL = 'gemini-2.5-flash'
+const MISC_MODEL = 'gemini-2.5-flash'
 
 // Todos los prompts se usan directamente desde prompts.ts
 
