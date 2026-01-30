@@ -7,7 +7,7 @@ import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { invoke } from '@tauri-apps/api/core'
 import { ThreadList } from './thread-list'
-import { TauriThread } from '@/types/tauri'
+import type { TauriThread } from '@/types/tauri'
 
 // Interface extending TauriThread to include the UI-specific property
 export interface ThreadUI extends TauriThread {

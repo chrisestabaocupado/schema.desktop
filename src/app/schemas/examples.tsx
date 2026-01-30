@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { PATHS } from '@/constants/paths'
 import { useRouter } from 'next/navigation'
 import { invoke } from '@tauri-apps/api/core'
-import { TauriThread } from '@/types/tauri'
+import type { TauriThread } from '@/types/tauri'
 
 export function ExampleButtons() {
   const router = useRouter()

@@ -1,5 +1,3 @@
-'use server'
-
 import type { Message, GeminiMessage } from '@/types/chat' // Ensure this path is correct
 import { GoogleGenAI } from '@google/genai'
 import { Type } from '@google/genai'
@@ -11,10 +9,7 @@ import {
   validateUserIntentPrompt,
 } from '@/lib/prompts'
 
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY
-const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY })
-
-const MAIN_MODEL = 'gemini-2.5-flash-preview-04-17'
+const MAIN_MODEL = 'gemini-2.0-flash'
 const SCHEMA_MODEL = 'gemini-2.0-flash'
 const MISC_MODEL = 'gemini-2.0-flash'
 
@@ -26,8 +21,10 @@ interface ValidationResult {
 }
 
 export async function validateUserIntent(
+  apiKey: string,
   userMessage: string,
 ): Promise<ValidationResult> {
+  const ai = new GoogleGenAI({ apiKey })
   const response = await ai.models.generateContent({
     model: MISC_MODEL, // Using a smaller model for validation
     contents: userMessage,
@@ -60,9 +57,11 @@ export async function validateUserIntent(
 }
 
 export async function sendUserMessage(
+  apiKey: string,
   currentHistory: GeminiMessage[],
   userMessage: string,
 ): Promise<{ responseText: string; updatedHistory: GeminiMessage[] }> {
+  const ai = new GoogleGenAI({ apiKey })
   const chat = ai.chats.create({
     model: MAIN_MODEL,
     history: currentHistory,
@@ -92,9 +91,11 @@ export async function normalizeChat(
 // ...existing code...
 
 export async function compareJsonSchemas(
+  apiKey: string,
   oldJson: string,
   newJson: string,
 ): Promise<{ summary: string; newSchema?: object }> {
+  const ai = new GoogleGenAI({ apiKey })
   const contents = `Esquema anterior:\n${oldJson}\n\nEsquema nuevo:\n${JSON.stringify(
     newJson,
   )}`
@@ -117,9 +118,11 @@ export async function compareJsonSchemas(
 }
 
 export async function generateDatabaseScriptFromDiagram(
+  apiKey: string,
   diagram: string,
   databaseType: 'sql' | 'mongo',
 ): Promise<string> {
+  const ai = new GoogleGenAI({ apiKey })
   let systemContext: string
 
   switch (databaseType) {

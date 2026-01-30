@@ -1,6 +1,6 @@
 'use client'
 
-import { TauriThread } from '@/types/tauri'
+import type { TauriThread } from '@/types/tauri'
 
 import { useParams } from 'next/navigation'
 import { useEffect, useState } from 'react'

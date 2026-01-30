@@ -5,7 +5,7 @@ import { ChevronLeft } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { useChatStore } from "@/stores/chat";
 
-const getChatTitle = (chatDiagram: any) => {
+const getChatTitle = (chatDiagram: string | null) => {
   if (chatDiagram) {
     const parsed = JSON.parse(chatDiagram);
     console.log(parsed);

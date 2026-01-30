@@ -16,7 +16,7 @@ import { getRelativeTime } from '@/utils/get-relative-time'
 import { Trash2 } from 'lucide-react'
 import { ConfirmationModal } from '@/components/ui/confirmation-modal'
 import { useRouter } from 'next/navigation'
-import { ThreadUI } from './page'
+import type { ThreadUI } from './page'
 import { invoke } from '@tauri-apps/api/core'
 
 export function ThreadList({ threads }: { threads: ThreadUI[] }) {

@@ -27,7 +27,7 @@ function ValidationAlertDialog({ open, onOpenChange, title, description }: { ope
   )
 }
 
-function APIKeyPage({ setCurrentPage, setGeminiApiKey, geminiApiKey, currentPage }: { setCurrentPage: any; setGeminiApiKey: any; geminiApiKey: string; currentPage: number }) {
+function APIKeyPage({ setCurrentPage, setGeminiApiKey, geminiApiKey, currentPage }: { setCurrentPage: (page: number) => void; setGeminiApiKey: (key: string) => void; geminiApiKey: string; currentPage: number }) {
   const [showAlert, setShowAlert] = useState(false);
 
   const handleNext = () => {
@@ -60,7 +60,7 @@ function APIKeyPage({ setCurrentPage, setGeminiApiKey, geminiApiKey, currentPage
   )
 }
 
-function UserNamePage({ setCurrentPage, setUserName, userName, currentPage }: { setCurrentPage: any; setUserName: any; currentPage: number, userName: string }) {
+function UserNamePage({ setCurrentPage, setUserName, userName, currentPage }: { setCurrentPage: (page: number) => void; setUserName: (name: string) => void; currentPage: number, userName: string }) {
   const [showAlert, setShowAlert] = useState(false);
 
   const handleNext = () => {
@@ -143,7 +143,7 @@ export default function App() {
     };
 
     checkOnboardingStatus();
-  }, []);
+  }, [router]);
 
   if (loadingStatus === 'checking') {
     return (

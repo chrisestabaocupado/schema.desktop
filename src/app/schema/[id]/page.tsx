@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { invoke } from '@tauri-apps/api/core'
 import { useParams, useRouter } from 'next/navigation'
 import PageContent from './page-content'
-import { TauriThread } from '@/types/tauri'
+import type { TauriThread } from '@/types/tauri'
 
 interface ThreadStore extends TauriThread {
   user_id: string
@@ -34,7 +34,7 @@ export default function Schema() {
     }
 
     loadThread()
-  }, [chatId])
+  }, [chatId, router])
 
   if (isLoading) {
     return (
@@ -53,5 +53,5 @@ export default function Schema() {
   // Since we are migrating, let's update PageContent props type next.
   // For now, pass as is and let's update PageContent.
 
-  return <PageContent thread={thread as any} />
+  return <PageContent thread={thread} />
 }

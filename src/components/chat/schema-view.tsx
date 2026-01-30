@@ -5,9 +5,11 @@ import { Card } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { CodeBlock } from '../code-block'
 
+import type { Schemas } from '@/types/chat'
+
 export function SchemaView({
   schemas,
-}: { schemas: { sql: string; mongo: string } }) {
+}: { schemas: Schemas }) {
   const [activeTab, setActiveTab] = useState('sql')
 
   return (

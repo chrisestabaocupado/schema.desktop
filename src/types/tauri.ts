@@ -1,4 +1,4 @@
-import { Message } from './chat';
+import type { Message } from './chat';
 
 export interface TauriThread {
   chat_id: string;

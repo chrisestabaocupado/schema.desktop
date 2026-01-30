@@ -2,7 +2,7 @@
 
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
-import type { Message, Roles } from '@/types/chat'
+import type { Message, Roles, Schemas } from '@/types/chat'
 import {
   sendUserMessage,
   normalizeChat,
@@ -11,7 +11,7 @@ import {
   validateUserIntent,
 } from '@/lib/gemini'
 import { invoke } from '@tauri-apps/api/core'
-import { TauriThread } from '@/types/tauri'
+import type { TauriThread } from '@/types/tauri'
 import { useConfigStore } from './config'
 import defaultMessages from '@/constants/defaultMessages'
 
@@ -25,7 +25,7 @@ interface ChatStore {
   chatHistory: Message[] | null
   chatId: string | null
   chatDiagram: string | null
-  chatSchemas: { sql: string }
+  chatSchemas: Schemas
   isLoading: boolean
 
   addMessageToChat: (role: Roles, text: string, diagram?: string) => void
@@ -66,8 +66,30 @@ export const useChatStore = create<ChatStore>()(
         addMessageToChat(ROLES.user, messageText)
         set({ isLoading: true, chatId })
 
+        let apiKey = ''
+        try {
+          apiKey = await invoke<string>('get_api_key')
+        } catch (error) {
+          console.error('Failed to get API key:', error)
+          addMessageToChat(
+            ROLES.assistant,
+            'Error: No pude obtener la API key. Por favor configura tu API key en la configuración.',
+          )
+          set({ isLoading: false })
+          return
+        }
+
+        if (!apiKey) {
+          addMessageToChat(
+            ROLES.assistant,
+            'Error: API key no encontrada. Por favor configura tu API key.',
+          )
+          set({ isLoading: false })
+          return
+        }
+
         // <<< VALIDAR INTENCIÓN DEL USUARIO
-        const validationResult = await validateUserIntent(messageText)
+        const validationResult = await validateUserIntent(apiKey, messageText)
         if (!validationResult.isValid) {
           addMessageToChat(ROLES.assistant, validationResult.message)
           set({ isLoading: false })
@@ -79,6 +101,7 @@ export const useChatStore = create<ChatStore>()(
 
         try {
           const { responseText: aiDiagramResponse } = await sendUserMessage(
+            apiKey,
             normalizedHistory,
             messageText,
           )
@@ -91,6 +114,7 @@ export const useChatStore = create<ChatStore>()(
             currentDiagramInStore !== aiDiagramResponse
           ) {
             const comparisonResult = await compareJsonSchemas(
+              apiKey,
               currentDiagramInStore,
               aiDiagramResponse,
             )
@@ -107,6 +131,7 @@ export const useChatStore = create<ChatStore>()(
           )
 
           const sqlSchema = await generateDatabaseScriptFromDiagram(
+            apiKey,
             aiDiagramResponse,
             'sql',
           )
