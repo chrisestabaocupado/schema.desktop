@@ -53,10 +53,6 @@ export default function DiagramPanel({
             <p className="text-foreground">Ver Esquemas</p>
           </Link>
 
-          <SignedIn>
-            <UserButton />
-          </SignedIn>
-
           <Button
             variant="ghost"
             size="icon"

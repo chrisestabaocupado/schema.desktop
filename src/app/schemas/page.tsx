@@ -60,7 +60,7 @@ export default function SchemasList() {
       </header>
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-3xl font-bold">Tus chats</h1>
+          <h1 className="text-3xl font-bold">Tus conversaciones</h1>
           <p className="text-muted-foreground mt-1">
             Visualiza y continúa tus conversaciones sobre esquemas de bases de
             datos
@@ -69,7 +69,7 @@ export default function SchemasList() {
         <Link href={PATHS.CHAT}>
           <Button className="flex items-center gap-2">
             <PlusCircle className="h-4 w-4" />
-            Nuevo Chat
+            Nueva Conversación
           </Button>
         </Link>
       </div>

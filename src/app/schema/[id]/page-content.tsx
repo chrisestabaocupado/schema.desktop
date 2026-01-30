@@ -1,6 +1,6 @@
 'use client'
 
-import type { IThread } from '@/models/Thread'
+import { TauriThread } from '@/types/tauri'
 
 import { useParams } from 'next/navigation'
 import { useEffect, useState } from 'react'
@@ -19,7 +19,7 @@ import Chat from '../sections/chat-panel'
 import DiagramPanel from '../sections/diagram-panel'
 import SchemaPanel from '../sections/schema-panel'
 
-export default function PageContent({ thread }: { thread: IThread | null }) {
+export default function PageContent({ thread }: { thread: TauriThread | null }) {
   const [panels, setPanels] = useState<{ [panel: string]: boolean }>({
     chat: true,
     schema: false,
@@ -29,13 +29,7 @@ export default function PageContent({ thread }: { thread: IThread | null }) {
   const params = useParams()
   const urlChatId = params.id as string
 
-  const { user } = useUser()
-  const userId = user?.id
-  const { setUserId } = useConfigStore()
-
-  useEffect(() => {
-    if (userId) setUserId(userId)
-  }, [userId, setUserId])
+  // Removed user logic as app is standalone
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: no need
   useEffect(() => {

@@ -22,8 +22,8 @@ export interface Message {
 
 export interface Schemas {
   sql: string
-  prisma: string
-  mongoose: string
+  mongo?: string
+  prisma?: string
 }
 
 export interface Conversation {
