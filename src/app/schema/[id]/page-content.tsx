@@ -1,26 +1,25 @@
 'use client'
 
-import type { IThread } from '@/models/Thread'
+import type { TauriThread } from '@/types/tauri'
 
-import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
+import { useEffect, useState } from 'react'
 
-import { ChevronUp } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
 } from '@/components/ui/resizable'
-import { Button } from '@/components/ui/button'
+import { ChevronUp } from 'lucide-react'
 
+import { useChatStore } from '@/stores/chat'
+import { useConfigStore } from '@/stores/config'
 import Chat from '../sections/chat-panel'
 import DiagramPanel from '../sections/diagram-panel'
 import SchemaPanel from '../sections/schema-panel'
-import { useChatStore } from '@/stores/chat'
-import { useConfigStore } from '@/stores/config'
-import { useUser } from '@clerk/nextjs'
 
-export default function PageContent({ thread }: { thread: IThread | null }) {
+export default function PageContent({ thread }: { thread: TauriThread | null }) {
   const [panels, setPanels] = useState<{ [panel: string]: boolean }>({
     chat: true,
     schema: false,
@@ -30,13 +29,7 @@ export default function PageContent({ thread }: { thread: IThread | null }) {
   const params = useParams()
   const urlChatId = params.id as string
 
-  const { user } = useUser()
-  const userId = user?.id
-  const { setUserId } = useConfigStore()
-
-  useEffect(() => {
-    if (userId) setUserId(userId)
-  }, [userId, setUserId])
+  // Removed user logic as app is standalone
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: no need
   useEffect(() => {

@@ -3,10 +3,11 @@
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { PATHS } from '@/constants/paths'
-import { duplicateThread } from '@/lib/thread'
 import { useRouter } from 'next/navigation'
+import { invoke } from '@tauri-apps/api/core'
+import type { TauriThread } from '@/types/tauri'
 
-export function ExampleButtons({ userId }: { userId: string }) {
+export function ExampleButtons() {
   const router = useRouter()
   const [loadingChatId, setLoadingChatId] = useState<string | null>(null)
 
@@ -28,7 +29,7 @@ export function ExampleButtons({ userId }: { userId: string }) {
   const handleDuplicate = async (chatId: string) => {
     setLoadingChatId(chatId)
     try {
-      const response = await duplicateThread(chatId, userId)
+      const response = await invoke<TauriThread>('duplicate_thread', { chatId })
       if (response?.chat_id) {
         router.push(`${PATHS.CHAT}/${response.chat_id}`)
       } else {

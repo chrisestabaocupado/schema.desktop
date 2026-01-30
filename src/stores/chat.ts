@@ -2,16 +2,16 @@
 
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
-import type { Message, Roles } from '@/types/chat'
-import type { IThread } from '@/models/Thread'
+import type { Message, Roles, Schemas } from '@/types/chat'
 import {
   sendUserMessage,
   normalizeChat,
   compareJsonSchemas,
   generateDatabaseScriptFromDiagram,
-  validateUserIntent, // <<< IMPORTAR validateUserIntent
-} from '@/lib/gemini' // Asegúrate que la ruta sea correcta
-import { getThread, updateThread, createThread } from '@/lib/thread'
+  validateUserIntent,
+} from '@/lib/gemini'
+import { invoke } from '@tauri-apps/api/core'
+import type { TauriThread } from '@/types/tauri'
 import { useConfigStore } from './config'
 import defaultMessages from '@/constants/defaultMessages'
 
@@ -25,12 +25,12 @@ interface ChatStore {
   chatHistory: Message[] | null
   chatId: string | null
   chatDiagram: string | null
-  chatSchemas: { sql: string; mongo: string }
+  chatSchemas: Schemas
   isLoading: boolean
 
   addMessageToChat: (role: Roles, text: string, diagram?: string) => void
   handleSendMessage: (messageText: string, chatId: string) => Promise<void>
-  loadChatThread: (chatId: string, thread: IThread | null) => Promise<void>
+  loadChatThread: (chatId: string, thread: TauriThread | null) => Promise<void>
 }
 
 export const useChatStore = create<ChatStore>()(
@@ -40,7 +40,7 @@ export const useChatStore = create<ChatStore>()(
       chatHistory: null,
       chatId: null,
       chatDiagram: null,
-      chatSchemas: { sql: '', mongo: '' },
+      chatSchemas: { sql: '' },
       isLoading: false,
 
       addMessageToChat: (role: Roles, text: string, diagram?: string) => {
@@ -66,8 +66,30 @@ export const useChatStore = create<ChatStore>()(
         addMessageToChat(ROLES.user, messageText)
         set({ isLoading: true, chatId })
 
+        let apiKey = ''
+        try {
+          apiKey = await invoke<string>('get_api_key')
+        } catch (error) {
+          console.error('Failed to get API key:', error)
+          addMessageToChat(
+            ROLES.assistant,
+            'Error: No pude obtener la API key. Por favor configura tu API key en la configuración.',
+          )
+          set({ isLoading: false })
+          return
+        }
+
+        if (!apiKey) {
+          addMessageToChat(
+            ROLES.assistant,
+            'Error: API key no encontrada. Por favor configura tu API key.',
+          )
+          set({ isLoading: false })
+          return
+        }
+
         // <<< VALIDAR INTENCIÓN DEL USUARIO
-        const validationResult = await validateUserIntent(messageText)
+        const validationResult = await validateUserIntent(apiKey, messageText)
         if (!validationResult.isValid) {
           addMessageToChat(ROLES.assistant, validationResult.message)
           set({ isLoading: false })
@@ -79,6 +101,7 @@ export const useChatStore = create<ChatStore>()(
 
         try {
           const { responseText: aiDiagramResponse } = await sendUserMessage(
+            apiKey,
             normalizedHistory,
             messageText,
           )
@@ -91,6 +114,7 @@ export const useChatStore = create<ChatStore>()(
             currentDiagramInStore !== aiDiagramResponse
           ) {
             const comparisonResult = await compareJsonSchemas(
+              apiKey,
               currentDiagramInStore,
               aiDiagramResponse,
             )
@@ -106,40 +130,41 @@ export const useChatStore = create<ChatStore>()(
             aiDiagramResponse,
           )
 
-          const [sqlSchema, mongodbSchema] = await Promise.all([
-            generateDatabaseScriptFromDiagram(aiDiagramResponse, 'sql'),
-            generateDatabaseScriptFromDiagram(aiDiagramResponse, 'mongo'),
-          ])
+          const sqlSchema = await generateDatabaseScriptFromDiagram(
+            apiKey,
+            aiDiagramResponse,
+            'sql',
+          )
 
           set({
             chatSchemas: {
               sql: sqlSchema.replaceAll(';;', ';\n') || '',
-              mongo: mongodbSchema || '',
             },
           })
 
           set({ chatDiagram: aiDiagramResponse })
 
-          const thread = await getThread(chatId)
+          const thread = await invoke<TauriThread>('get_thread', { chatId }).catch(
+            () => null,
+          )
+
           if (thread) {
             const updatedConversationHistory = get().chatHistory || []
-            await updateThread(chatId, {
+            await invoke('update_thread', {
+              chatId,
               diagram: aiDiagramResponse,
+              schemaSql: chatSchemas.sql,
               conversation: updatedConversationHistory,
-              schemas: chatSchemas,
             })
           } else {
-            const { userId } = useConfigStore.getState()
-            if (!userId) {
-              throw new Error('User ID is not set in the config store.')
-            }
-            const newThread = await createThread(userId, {
-              chat_id: chatId,
+            await invoke('create_thread', {
+              chatId,
+              title: null,
               diagram: aiDiagramResponse,
+              schemaSql: chatSchemas.sql,
               conversation: get().chatHistory || [],
-              schemas: chatSchemas,
             })
-            set({ chatId: newThread.chat_id })
+            set({ chatId })
           }
         } catch (error) {
           console.error('Error sending message:', error)
@@ -152,16 +177,17 @@ export const useChatStore = create<ChatStore>()(
         }
       },
 
-      loadChatThread: async (chatId: string, thread: IThread | null) => {
+      loadChatThread: async (chatId: string, thread: TauriThread | null) => {
         const { addMessageToChat } = get()
         set({ isLoading: true })
         try {
           if (thread) {
+            console.log(thread.diagram)
             set({
               chatId: thread.chat_id,
               chatHistory: thread.conversation,
               chatDiagram: thread.diagram,
-              chatSchemas: thread.schemas || { mongo: '', sql: '' }, // Ensure chatSchemas is not undefined
+              chatSchemas: { sql: thread.schema_sql },
               isLoading: false,
             })
           } else {
@@ -169,11 +195,11 @@ export const useChatStore = create<ChatStore>()(
               chatId,
               chatHistory: [],
               chatDiagram: null,
-              chatSchemas: { mongo: '', sql: '' },
+              chatSchemas: { sql: '' },
               isLoading: false,
             })
-            //const randomIndex = Math.floor(Math.random() * defaultMessages.length);
-            //addMessageToChat(ROLES.assistant, defaultMessages[randomIndex]);
+            const randomIndex = Math.floor(Math.random() * defaultMessages.length);
+            addMessageToChat(ROLES.user, defaultMessages[randomIndex]);
           }
         } catch (error) {
           console.error('Error loading chat thread:', error)
@@ -181,7 +207,7 @@ export const useChatStore = create<ChatStore>()(
             chatId,
             chatHistory: [],
             chatDiagram: null,
-            chatSchemas: { mongo: '', sql: '' },
+            chatSchemas: { sql: '' },
             isLoading: false,
           })
         }
