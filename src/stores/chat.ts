@@ -1,19 +1,19 @@
 'use client'
 
-import { create } from 'zustand'
-import { persist, createJSONStorage } from 'zustand/middleware'
-import type { Message, Roles, Schemas } from '@/types/chat'
+import defaultMessages from '@/constants/defaultMessages'
 import {
-  sendUserMessage,
-  normalizeChat,
   compareJsonSchemas,
   generateDatabaseScriptFromDiagram,
+  normalizeChat,
+  sendUserMessage,
   validateUserIntent,
 } from '@/lib/gemini'
-import { invoke } from '@tauri-apps/api/core'
+import type { Message, Roles, Schemas } from '@/types/chat'
 import type { TauriThread } from '@/types/tauri'
+import { invoke } from '@tauri-apps/api/core'
+import { create } from 'zustand'
+import { createJSONStorage, persist } from 'zustand/middleware'
 import { useConfigStore } from './config'
-import defaultMessages from '@/constants/defaultMessages'
 
 const ROLES: Record<string, Roles> = {
   user: 'user',
@@ -29,7 +29,10 @@ interface ChatStore {
   isLoading: boolean
 
   addMessageToChat: (role: Roles, text: string, diagram?: string) => void
-  handleSendMessage: (messageText: string, chatId: string) => Promise<void>
+  handleSendMessage: (
+    messageText: string,
+    chatId: string,
+  ) => Promise<string | null>
   loadChatThread: (chatId: string, thread: TauriThread | null) => Promise<void>
 }
 
@@ -55,7 +58,10 @@ export const useChatStore = create<ChatStore>()(
         set({ chatHistory: [...(chatHistory || []), newMessage] })
       },
 
-      handleSendMessage: async (messageText: string, chatId: string) => {
+      handleSendMessage: async (
+        messageText: string,
+        chatId: string,
+      ): Promise<string | null> => {
         const {
           addMessageToChat,
           chatHistory: currentLocalHistory,
@@ -63,8 +69,14 @@ export const useChatStore = create<ChatStore>()(
           chatSchemas,
         } = get()
 
+        // Check if this is a new conversation
+        const isNewConversation = chatId === 'new'
+
+        // Generate new UUID if this is a new conversation
+        const effectiveChatId = isNewConversation ? crypto.randomUUID() : chatId
+
         addMessageToChat(ROLES.user, messageText)
-        set({ isLoading: true, chatId })
+        set({ isLoading: true, chatId: effectiveChatId })
 
         let apiKey = ''
         try {
@@ -76,7 +88,7 @@ export const useChatStore = create<ChatStore>()(
             'Error: No pude obtener la API key. Por favor configura tu API key en la configuración.',
           )
           set({ isLoading: false })
-          return
+          return null
         }
 
         if (!apiKey) {
@@ -85,7 +97,7 @@ export const useChatStore = create<ChatStore>()(
             'Error: API key no encontrada. Por favor configura tu API key.',
           )
           set({ isLoading: false })
-          return
+          return null
         }
 
         // <<< VALIDAR INTENCIÓN DEL USUARIO
@@ -93,7 +105,7 @@ export const useChatStore = create<ChatStore>()(
         if (!validationResult.isValid) {
           addMessageToChat(ROLES.assistant, validationResult.message)
           set({ isLoading: false })
-          return
+          return null
         }
         // >>> FIN VALIDACIÓN
 
@@ -144,42 +156,55 @@ export const useChatStore = create<ChatStore>()(
 
           set({ chatDiagram: aiDiagramResponse })
 
-          const thread = await invoke<TauriThread>('get_thread', { chatId }).catch(
-            () => null,
-          )
+          const thread = await invoke<TauriThread>('get_thread', {
+            chatId: effectiveChatId,
+          }).catch(() => null)
 
           if (thread) {
             const updatedConversationHistory = get().chatHistory || []
             await invoke('update_thread', {
-              chatId,
+              chatId: effectiveChatId,
               diagram: aiDiagramResponse,
-              schemaSql: chatSchemas.sql,
+              schemaSql: sqlSchema,
               conversation: updatedConversationHistory,
             })
           } else {
             await invoke('create_thread', {
-              chatId,
+              chatId: effectiveChatId,
               title: null,
               diagram: aiDiagramResponse,
-              schemaSql: chatSchemas.sql,
+              schemaSql: sqlSchema,
               conversation: get().chatHistory || [],
             })
-            set({ chatId })
+            set({ chatId: effectiveChatId })
           }
+
+          set({ isLoading: false })
+
+          // Return the effective chatId (new UUID for new conversations)
+          return effectiveChatId
         } catch (error) {
           console.error('Error sending message:', error)
           addMessageToChat(
             ROLES.assistant,
             `Sorry, I encountered an error: ${(error as Error).message}`,
           )
-        } finally {
           set({ isLoading: false })
+          return null
         }
       },
 
       loadChatThread: async (chatId: string, thread: TauriThread | null) => {
         const { addMessageToChat } = get()
-        set({ isLoading: true })
+
+        // RESET COMPLETO - Limpiar todo el estado primero para evitar mezclar conversaciones
+        set({
+          chatHistory: [],
+          chatDiagram: null,
+          chatSchemas: { sql: '' },
+          isLoading: true,
+        })
+
         try {
           if (thread) {
             console.log(thread.diagram)
@@ -190,16 +215,26 @@ export const useChatStore = create<ChatStore>()(
               chatSchemas: { sql: thread.schema_sql },
               isLoading: false,
             })
+          } else if (chatId === 'new') {
+            // Special case for new conversations - show welcome message
+            const randomIndex = Math.floor(
+              Math.random() * defaultMessages.length,
+            )
+            addMessageToChat(ROLES.assistant, defaultMessages[randomIndex])
+
+            set({
+              chatId: 'new',
+              isLoading: false,
+            })
           } else {
             set({
               chatId,
-              chatHistory: [],
-              chatDiagram: null,
-              chatSchemas: { sql: '' },
               isLoading: false,
             })
-            const randomIndex = Math.floor(Math.random() * defaultMessages.length);
-            addMessageToChat(ROLES.user, defaultMessages[randomIndex]);
+            const randomIndex = Math.floor(
+              Math.random() * defaultMessages.length,
+            )
+            addMessageToChat(ROLES.user, defaultMessages[randomIndex])
           }
         } catch (error) {
           console.error('Error loading chat thread:', error)

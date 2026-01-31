@@ -1,10 +1,10 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import type { TauriThread } from '@/types/tauri'
 import { invoke } from '@tauri-apps/api/core'
 import { useParams, useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
 import PageContent from './page-content'
-import type { TauriThread } from '@/types/tauri'
 
 interface ThreadStore extends TauriThread {
   user_id: string
@@ -21,9 +21,20 @@ export default function Schema() {
     const loadThread = async () => {
       try {
         if (!chatId) return
+
+        // Special case: "new" means creating a new conversation
+        // Don't try to load from database, just show empty chat
+        if (chatId === 'new') {
+          console.log(
+            'Creating new conversation - thread will be created on first message',
+          )
+          setThread(null)
+          setIsLoading(false)
+          return
+        }
+
         const result = await invoke<TauriThread>('get_thread', { chatId })
         console.log('Loaded thread:', result)
-        // Convert to match IThread interface if needed by PageContent using type assertion or wrapper
         setThread(result)
       } catch (error) {
         console.warn('Thread not found, redirecting to schemas list')
@@ -44,14 +55,5 @@ export default function Schema() {
     )
   }
 
-  // Cast TauriThread to IThread compatible type if necessary for PageContent
-  // Or update PageContent to accept TauriThread.
-  // PageContent expects IThread | null. Let's check PageContent signature.
-  // PageContent accepts { thread: IThread | null }.
-  // IThread has user_id, schemas.mongo etc.
-  // We need to either update PageContent or mock missing fields.
-  // Since we are migrating, let's update PageContent props type next.
-  // For now, pass as is and let's update PageContent.
-
-  return <PageContent thread={thread} />
+  return <PageContent thread={thread} chatId={chatId} />
 }

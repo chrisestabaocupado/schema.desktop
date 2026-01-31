@@ -19,7 +19,12 @@ import Chat from '../sections/chat-panel'
 import DiagramPanel from '../sections/diagram-panel'
 import SchemaPanel from '../sections/schema-panel'
 
-export default function PageContent({ thread }: { thread: TauriThread | null }) {
+interface PageContentProps {
+  thread: TauriThread | null
+  chatId: string
+}
+
+export default function PageContent({ thread, chatId }: PageContentProps) {
   const [panels, setPanels] = useState<{ [panel: string]: boolean }>({
     chat: true,
     schema: false,
